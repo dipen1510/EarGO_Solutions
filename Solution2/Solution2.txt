@@ -1,0 +1,57 @@
+—Solution-2 SQL
+
+—Step-1 Create Input and Output tables
+
+CREATE TABLE Input_Table(
+ID Number not null,
+Home_page Number default 0 not null,
+Product_page Number default 0 not null,
+Warranty_page Number default 0 not null);
+
+CREATE TABLE output_table(
+pages Varchar2(20 CHAR) not null,
+counts Number default 0 not null);
+
+—Step-2 Insert Data into Tables. Initially counts column of  output table  value 0
+
+INSERT INTO input_table(id,HOME_PAGE,PRODUCT_PAGE,WARRANTY_PAGE) VALUES(1,1,1,1);
+INSERT INTO input_table(id,HOME_PAGE,PRODUCT_PAGE,WARRANTY_PAGE) VALUES(2,1,1,0);
+INSERT INTO input_table(id,HOME_PAGE,PRODUCT_PAGE,WARRANTY_PAGE) VALUES(3,1,0,1);
+INSERT INTO input_table(id,HOME_PAGE,PRODUCT_PAGE,WARRANTY_PAGE) VALUES(4,1,0,0);
+INSERT INTO input_table(id,HOME_PAGE,PRODUCT_PAGE,WARRANTY_PAGE) VALUES(5,0,1,1);
+INSERT INTO input_table(id,HOME_PAGE,PRODUCT_PAGE,WARRANTY_PAGE) VALUES(6,0,1,0);
+INSERT INTO input_table(id,HOME_PAGE,PRODUCT_PAGE,WARRANTY_PAGE) VALUES(7,0,0,1);
+INSERT INTO input_table(id,HOME_PAGE,PRODUCT_PAGE,WARRANTY_PAGE) VALUES(8,0,0,0);
+
+INSERT INTO output_table(pages) VALUES('HOME_PAGE');
+INSERT INTO output_table(pages) VALUES('PRODUCT_PAGE');
+INSERT INTO output_table(pages) VALUES('WARRANTY_PAGE');
+
+COMMIT;
+
+—Step-3 Using unpivot convert column into row. Below query reform data from input table
+
+SELECT pages,sum(total) as counts 
+FROM input_table 
+    unpivot ( 
+            total for pages in ( HOME_PAGE , PRODUCT_PAGE, WARRANTY_PAGE )
+            )
+GROUP BY pages
+ORDER BY pages;
+
+—Step-4 Update output table counts column using above query
+                                         
+UPDATE output_table t2 SET counts = (SELECT counts FROM 
+                                        (SELECT pages,sum(total) as counts FROM input_table 
+                                         unpivot ( 
+                                                    total for pages in ( HOME_PAGE , PRODUCT_PAGE, WARRANTY_PAGE )
+                                                 )
+                                         GROUP BY pages
+                                         ORDER BY pages) t1
+                                    WHERE t1.pages = t2.pages);
+                                    
+COMMIT;
+
+—Step-5 Select query gives the expected answer
+                                    
+SELECT * FROM output_table;
